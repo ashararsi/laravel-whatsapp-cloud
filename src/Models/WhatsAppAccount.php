@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Vendor\LaravelWhatsAppCloud\Models\Concerns\BelongsToTenant;
 use Vendor\LaravelWhatsAppCloud\Observers\WhatsAppAccountObserver;
+use Vendor\LaravelWhatsAppCloud\Services\TenantContext;
 
 /**
  * @property int $id
@@ -125,8 +126,10 @@ class WhatsAppAccount extends Model
     {
         $query = static::query()->where('id', '!=', $account->id);
 
-        if ($account->tenant_id !== null) {
-            $query->where('tenant_id', $account->tenant_id);
+        $context = app(TenantContext::class);
+
+        if ($context->usesSchema() && $account->tenant_id !== null) {
+            $query->where($context->column(), $account->tenant_id);
         }
 
         $query->update(['is_default' => false]);

@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Optional multi-tenant mode via `WHATSAPP_TENANT_ENABLED` — works in single-tenant mode by default
-- `TenantContext`, `TenantScope`, and `TenantResolverInterface` for host-app tenant resolution
-- Auto `tenant_id` assignment on tenant-aware models when creating records
+- Interactive `whatsapp:install` prompt to choose single-app or multi-tenant mode
+- Conditional migrations: tenant tables/columns created only when `WHATSAPP_TENANT_ENABLED=true`
+- Upgrade migration to add tenant support to existing single-app installs
 
 ### Fixed
 - MySQL template migration: add standalone `account_id` index before dropping composite unique key

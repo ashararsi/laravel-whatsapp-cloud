@@ -16,7 +16,7 @@ trait BelongsToTenant
         static::creating(function (Model $model): void {
             $context = app(TenantContext::class);
 
-            if (! $context->enabled()) {
+            if (! $context->usesSchema()) {
                 return;
             }
 
