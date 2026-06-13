@@ -42,6 +42,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set('whatsapp.events.process_incoming', false);
         $app['config']->set('whatsapp.media.enabled', false);
         $app['config']->set('whatsapp.ai.enabled', false);
+        $app['config']->set('whatsapp.tenant.enabled', false);
     }
 
     protected function defineDatabaseMigrations(): void

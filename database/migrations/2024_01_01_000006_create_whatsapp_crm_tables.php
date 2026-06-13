@@ -3,38 +3,68 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Vendor\LaravelWhatsAppCloud\Support\MigrationTenant;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('whatsapp_tenants', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->boolean('is_active')->default(true);
-            $table->json('settings_json')->nullable();
-            $table->timestamps();
-        });
+        if (MigrationTenant::enabled()) {
+            Schema::create(MigrationTenant::table(), function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('slug')->unique();
+                $table->boolean('is_active')->default(true);
+                $table->json('settings_json')->nullable();
+                $table->timestamps();
+            });
+        }
 
         Schema::table('whatsapp_accounts', function (Blueprint $table) {
-            $table->foreignId('tenant_id')->nullable()->after('id')->constrained('whatsapp_tenants')->nullOnDelete();
+            if (MigrationTenant::enabled()) {
+                $table->foreignId(MigrationTenant::column())
+                    ->nullable()
+                    ->after('id')
+                    ->constrained(MigrationTenant::table())
+                    ->nullOnDelete();
+            }
+
             $table->string('waba_id')->nullable()->after('phone_number_id');
         });
 
-        Schema::table('whatsapp_contacts', function (Blueprint $table) {
-            $table->foreignId('tenant_id')->nullable()->after('id')->constrained('whatsapp_tenants')->nullOnDelete();
-        });
+        if (MigrationTenant::enabled()) {
+            Schema::table('whatsapp_contacts', function (Blueprint $table) {
+                $table->foreignId(MigrationTenant::column())
+                    ->nullable()
+                    ->after('id')
+                    ->constrained(MigrationTenant::table())
+                    ->nullOnDelete();
+            });
+        }
 
         Schema::table('whatsapp_conversations', function (Blueprint $table) {
-            $table->foreignId('tenant_id')->nullable()->after('id')->constrained('whatsapp_tenants')->nullOnDelete();
+            if (MigrationTenant::enabled()) {
+                $table->foreignId(MigrationTenant::column())
+                    ->nullable()
+                    ->after('id')
+                    ->constrained(MigrationTenant::table())
+                    ->nullOnDelete();
+            }
+
             $table->string('status', 20)->default('open')->after('last_message_at');
             $table->string('assigned_to')->nullable()->after('status');
         });
 
         Schema::create('whatsapp_tags', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->nullable()->constrained('whatsapp_tenants')->nullOnDelete();
+
+            if (MigrationTenant::enabled()) {
+                $table->foreignId(MigrationTenant::column())
+                    ->nullable()
+                    ->constrained(MigrationTenant::table())
+                    ->nullOnDelete();
+            }
+
             $table->foreignId('account_id')->nullable()->constrained('whatsapp_accounts')->cascadeOnDelete();
             $table->string('name');
             $table->string('color', 20)->default('#198754');
@@ -58,7 +88,14 @@ return new class extends Migration
 
         Schema::create('whatsapp_campaigns', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->nullable()->constrained('whatsapp_tenants')->nullOnDelete();
+
+            if (MigrationTenant::enabled()) {
+                $table->foreignId(MigrationTenant::column())
+                    ->nullable()
+                    ->constrained(MigrationTenant::table())
+                    ->nullOnDelete();
+            }
+
             $table->foreignId('account_id')->constrained('whatsapp_accounts')->cascadeOnDelete();
             $table->string('name');
             $table->string('type', 30)->default('text');
@@ -99,7 +136,14 @@ return new class extends Migration
 
         Schema::create('whatsapp_auto_replies', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->nullable()->constrained('whatsapp_tenants')->nullOnDelete();
+
+            if (MigrationTenant::enabled()) {
+                $table->foreignId(MigrationTenant::column())
+                    ->nullable()
+                    ->constrained(MigrationTenant::table())
+                    ->nullOnDelete();
+            }
+
             $table->foreignId('account_id')->constrained('whatsapp_accounts')->cascadeOnDelete();
             $table->string('name');
             $table->string('trigger_type', 30)->default('keyword');
@@ -114,7 +158,14 @@ return new class extends Migration
 
         Schema::create('whatsapp_ai_workflows', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->nullable()->constrained('whatsapp_tenants')->nullOnDelete();
+
+            if (MigrationTenant::enabled()) {
+                $table->foreignId(MigrationTenant::column())
+                    ->nullable()
+                    ->constrained(MigrationTenant::table())
+                    ->nullOnDelete();
+            }
+
             $table->foreignId('account_id')->constrained('whatsapp_accounts')->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
@@ -167,19 +218,27 @@ return new class extends Migration
         Schema::dropIfExists('whatsapp_tags');
 
         Schema::table('whatsapp_conversations', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('tenant_id');
+            if (Schema::hasColumn('whatsapp_conversations', MigrationTenant::column())) {
+                $table->dropConstrainedForeignId(MigrationTenant::column());
+            }
+
             $table->dropColumn(['status', 'assigned_to']);
         });
 
-        Schema::table('whatsapp_contacts', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('tenant_id');
-        });
+        if (Schema::hasColumn('whatsapp_contacts', MigrationTenant::column())) {
+            Schema::table('whatsapp_contacts', function (Blueprint $table) {
+                $table->dropConstrainedForeignId(MigrationTenant::column());
+            });
+        }
 
         Schema::table('whatsapp_accounts', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('tenant_id');
+            if (Schema::hasColumn('whatsapp_accounts', MigrationTenant::column())) {
+                $table->dropConstrainedForeignId(MigrationTenant::column());
+            }
+
             $table->dropColumn('waba_id');
         });
 
-        Schema::dropIfExists('whatsapp_tenants');
+        Schema::dropIfExists(MigrationTenant::table());
     }
 };

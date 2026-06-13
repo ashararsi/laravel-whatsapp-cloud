@@ -4,6 +4,7 @@ namespace Vendor\LaravelWhatsAppCloud\Observers;
 
 use Illuminate\Support\Facades\Cache;
 use Vendor\LaravelWhatsAppCloud\Models\WhatsAppAccount;
+use Vendor\LaravelWhatsAppCloud\Services\TenantContext;
 
 class WhatsAppAccountObserver
 {
@@ -17,11 +18,13 @@ class WhatsAppAccountObserver
         $this->flushCache($account);
 
         if ($account->is_default) {
+            $context = app(TenantContext::class);
+
             $replacement = WhatsAppAccount::query()
                 ->where('id', '!=', $account->id)
                 ->when(
-                    $account->tenant_id !== null,
-                    fn ($query) => $query->where('tenant_id', $account->tenant_id),
+                    $context->usesSchema() && $account->tenant_id !== null,
+                    fn ($query) => $query->where($context->column(), $account->tenant_id),
                 )
                 ->active()
                 ->oldest('id')

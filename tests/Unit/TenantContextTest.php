@@ -12,6 +12,12 @@ use Vendor\LaravelWhatsAppCloud\Tests\TestCase;
 
 class TenantContextTest extends TestCase
 {
+    protected function defineEnvironment($app): void
+    {
+        parent::defineEnvironment($app);
+        $app['config']->set('whatsapp.tenant.enabled', true);
+    }
+
     #[Test]
     public function single_tenant_mode_does_not_scope_queries(): void
     {
