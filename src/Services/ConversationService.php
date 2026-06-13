@@ -103,11 +103,13 @@ class ConversationService implements ConversationRecorderInterface
                 'account_id' => $account->id,
                 'phone' => $normalizedPhone,
             ],
-            [
-                'tenant_id' => $account->tenant_id,
-                'name' => $name,
-                'metadata_json' => $metadata,
-            ],
+            array_merge(
+                $this->tenantAttributes($account),
+                [
+                    'name' => $name,
+                    'metadata_json' => $metadata,
+                ],
+            ),
         );
 
         $updates = [];
@@ -136,11 +138,27 @@ class ConversationService implements ConversationRecorderInterface
                 'account_id' => $account->id,
                 'contact_id' => $contact->id,
             ],
-            [
-                'tenant_id' => $account->tenant_id ?? $contact->tenant_id,
-                'last_message_at' => now(),
-            ],
+            array_merge(
+                $this->tenantAttributes($account, $contact),
+                [
+                    'last_message_at' => now(),
+                ],
+            ),
         );
+    }
+
+    /**
+     * @return array<string, int|null>
+     */
+    protected function tenantAttributes(WhatsAppAccount $account, ?WhatsAppContact $contact = null): array
+    {
+        if (! app(TenantContext::class)->usesSchema()) {
+            return [];
+        }
+
+        return [
+            'tenant_id' => $account->tenant_id ?? $contact?->tenant_id,
+        ];
     }
 
     protected function touchConversation(WhatsAppConversation $conversation): void

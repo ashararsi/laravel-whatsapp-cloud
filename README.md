@@ -37,6 +37,20 @@ php artisan whatsapp:install
 php artisan migrate
 ```
 
+During install you choose **single app** or **multi-tenant** mode:
+
+- **Single app** (default) — no `whatsapp_tenants` table, no `tenant_id` columns
+- **Multi-tenant** — creates tenant tables and `tenant_id` columns on migrate
+
+Non-interactive install:
+
+```bash
+php artisan whatsapp:install --single --migrate
+php artisan whatsapp:install --tenant --migrate
+```
+
+Set `WHATSAPP_TENANT_ENABLED` in `.env` **before** `migrate` if you skip the installer prompt.
+
 Configure runtime settings at `/admin/whatsapp/settings` after migration.
 
 ## Provider Comparison
@@ -332,14 +346,14 @@ Set `WHATSAPP_OPENAI_API_KEY` in `.env` (secret — not stored in DB). Enable fe
 
 ## Multi-Tenant Mode (Optional)
 
-By default the package runs in **single-tenant** mode — no tenant scoping is applied and `tenant_id` columns remain optional.
-
-Enable tenant isolation when your app serves multiple tenants:
+Choose **multi-tenant** during `php artisan whatsapp:install`, or set manually:
 
 ```env
 WHATSAPP_TENANT_ENABLED=true
 WHATSAPP_TENANT_RESOLVER=App\\WhatsApp\\TenantResolver
 ```
+
+**Single-app mode** (default) skips `whatsapp_tenants` and all `tenant_id` columns entirely.
 
 Implement `TenantResolverInterface` in your app:
 

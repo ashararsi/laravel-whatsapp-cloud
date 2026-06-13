@@ -2,6 +2,7 @@
 
 namespace Vendor\LaravelWhatsAppCloud\Services;
 
+use Illuminate\Support\Facades\Schema;
 use Vendor\LaravelWhatsAppCloud\Contracts\TenantResolverInterface;
 
 class TenantContext
@@ -35,7 +36,17 @@ class TenantContext
 
     public function shouldScope(): bool
     {
-        return $this->enabled() && $this->hasTenant();
+        return $this->usesSchema() && $this->hasTenant();
+    }
+
+    public function usesSchema(): bool
+    {
+        if (! $this->enabled()) {
+            return false;
+        }
+
+        return Schema::hasTable('whatsapp_tenants')
+            && Schema::hasColumn('whatsapp_accounts', $this->column());
     }
 
     /**
